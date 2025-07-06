@@ -80,32 +80,25 @@ if query:
         else:
             df_tail = df.tail(20)
 
-        def kleur_koers(val, col):
-            try:
-                idx = val.name
-                next_idx = df_tail.index[df_tail.index.get_loc(idx) + 1] if df_tail.index.get_loc(idx) + 1 < len(df_tail.index) else None
-                if next_idx:
-                    if df_tail.at[idx, col] > df_tail.at[next_idx, col]:
-                        return 'color: green'
-                    elif df_tail.at[idx, col] < df_tail.at[next_idx, col]:
-                        return 'color: red'
+        def kleur_koers_kolom(kolom):
+            kleuren = []
+            for i in range(len(df_tail)):
+                if i + 1 < len(df_tail):
+                    if df_tail[kolom].iloc[i] > df_tail[kolom].iloc[i + 1]:
+                        kleuren.append('color: green')
+                    elif df_tail[kolom].iloc[i] < df_tail[kolom].iloc[i + 1]:
+                        kleuren.append('color: red')
                     else:
-                        return 'color: gray'
-            except:
-                return ''
-            return ''
+                        kleuren.append('color: gray')
+                else:
+                    kleuren.append('color: gray')  # Laatste regel
+            return kleuren
 
-        styled_df = df_tail.style.applymap(lambda v: 'color: gray', subset=["Open", "High", "Low", "Close"])
-        for col in ["Open", "High", "Low", "Close"]:
-            styled_df = styled_df.apply(lambda s: [kleur_koers(s, col) for _ in s], subset=[col])
+        styled_df = df_tail.style
+        for kolom in ["Open", "High", "Low", "Close"]:
+            styled_df = styled_df.apply(kleur_koers_kolom, subset=[kolom])
 
         st.dataframe(styled_df, use_container_width=True)
-
-    else:
-        st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
-
-
-
 
 
 
