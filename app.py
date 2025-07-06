@@ -31,11 +31,11 @@ onder_grafiek = st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"]
 
 # ✅ Data ophalen en tonen
 if query:
-    overlay_df = fetch_chart_data(query, periode_keuze)
-    candle_df = fetch_raw_candlestick_data(query, periode_keuze)
+    overlay_dfc = fetch_chart_data(query, periode_keuze)
+    candle_dfc = fetch_raw_candlestick_data(query, periode_keuze)
 
-    if not overlay_df.empty and not candle_df.empty:
-        st.success(f"✅ Gegevens opgehaald: {len(candle_df)} datapunten")
+    if not overlay_dfc.empty and not candle_dfc.empty:
+        st.success(f"✅ Gegevens opgehaald: {len(candle_dfc)} datapunten")
 
         # 📋 Tabel bovenaan
         with st.expander("📋 Laatste 100 koersregels"):
@@ -49,23 +49,23 @@ if query:
             st.dataframe(df_display)
 
         # 📈 Candlestick-grafiek
-        fig = draw_candlestick_chart(candle_df, overlay_df, query, overlay_lijnen)
+        fig = draw_candlestick_chart(candle_dfc, overlay_dfc, query, overlay_lijnen)
         st.plotly_chart(fig, use_container_width=True)
 
         # 📉 Extra grafiek onder koersgrafiek
         if "Volume" in onder_grafiek:
             st.subheader("📉 Volume")
             vol_fig = go.Figure()
-            vol_fig.add_trace(go.Bar(x=candle_df.index, y=candle_df['Volume'], name='Volume'))
+            vol_fig.add_trace(go.Bar(x=candle_dfc.index, y=candle_dfc['Volume'], name='Volume'))
             vol_fig.update_layout(height=200, margin=dict(l=20, r=20, t=20, b=20), template="plotly_white")
             st.plotly_chart(vol_fig, use_container_width=True)
 
         # 📋 Kleurtabel onderaan
         st.markdown("### 📋 Koersdata (kleur per kolom)")
         if st.toggle("Toon laatste 100 regels"):
-            df = overlay_df.tail(100)
+            df = overlay_dfc.tail(100)
         else:
-            df = overlay_df.tail(20)
+            df = overlay_dfc.tail(20)
 
         def kleur_koers(val, col):
             try:
