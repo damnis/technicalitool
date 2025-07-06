@@ -92,5 +92,36 @@ if query:
 
         st.dataframe(styled_df, use_container_width=True)
 
-    else:
-        st.warning("❌ Ticker niet gevonden of geen data beschikbaar.")
+else:
+    st.warning("❌ Ticker niet gevonden of geen data beschikbaar.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# wit
+
+
+
+
+
