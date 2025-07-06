@@ -90,8 +90,8 @@ if query:
 
         st.dataframe(styled_df, use_container_width=True)
 
-        else:
-            st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
+else:
+    st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
 
 
 
