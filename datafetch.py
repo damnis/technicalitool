@@ -45,13 +45,24 @@ def fetch_chart_data(ticker, periode):
 @st.cache_data(ttl=900)
 def fetch_raw_candlestick_data(ticker, periode):
     interval = bepaal_interval(periode)
-    df = yf.download(ticker, period=periode, interval=interval)
+    df = yf.download(ticker, period=periode, interval=interval, group_by="ticker")
 
-    if df.empty or "Close" not in df.columns:
+    if df.empty:
         return pd.DataFrame()
 
-    return df  # géén datetime conversie op index!
+    # Flatten MultiIndex als aanwezig
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = df.columns.get_level_values(0)  # Negeer de tickernaam
 
+    df.index = pd.to_datetime(df.index)
+
+    required_cols = ["Open", "High", "Low", "Close"]
+    if not all(col in df.columns for col in required_cols):
+        st.warning(f"⚠️ Kolommen ontbreken: {df.columns.tolist()}")
+        return pd.DataFrame()
+
+    return df
+    
 # ✅ Teken candlestick-grafiek met overlays
 def draw_custom_candlestick_chart(candle_df, overlay_df, ticker="", selected_lines=[]):
     fig = go.Figure()
