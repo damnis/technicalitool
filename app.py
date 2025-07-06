@@ -18,7 +18,7 @@ tot = st.date_input("Einddatum", datetime.today())
 
 # Indicator keuzes
 st.markdown("### Overlay Indicatoren")
-overlay_lijnen = st.multiselect("Selecteer lijnen op grafiek", ["MA20", "MA50", "MA200", "Bollinger"], default=["MA20"])
+overlay_lijnen = st.multiselect("Selecteer lijnen op grafiek", ["Candlestick", "MA20", "MA50", "MA200", "Bollinger"], default=["MA20"])
 
 st.markdown("### Onderliggende Indicatoren")
 onder_grafiek = st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"], default=["Volume"])
