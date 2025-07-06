@@ -17,7 +17,7 @@ def bepaal_interval(periode):
         return "1mo"
 
 # ✅ Caching van volledige dataset (candlestick + overlays)
-@@st.cache_data(ttl=900)
+@st.cache_data(ttl=900)
 def fetch_data(ticker, periode):
     interval = bepaal_interval(periode)
     df = yf.download(ticker, period=periode, interval=interval)
