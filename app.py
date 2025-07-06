@@ -59,24 +59,21 @@ if query:
             vol_fig.update_layout(height=200, margin=dict(l=20, r=20, t=20, b=20), template="plotly_white")
             st.plotly_chart(vol_fig, use_container_width=True)
 
-    else:
-        st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
-        
         # 📋 Kleurtabel onderaan
         st.markdown("### 📋 Koersdata (kleur per kolom)")
         if st.toggle("Toon laatste 100 regels"):
-            df = overlay_df.tail(100)
+            df_tail = df.tail(100)
         else:
-            df = overlay_df.tail(20)
+            df_tail = df.tail(20)
 
         def kleur_koers(val, col):
             try:
                 idx = val.name
-                next_idx = df.index[df.index.get_loc(idx) + 1] if df.index.get_loc(idx) + 1 < len(df.index) else None
+                next_idx = df_tail.index[df_tail.index.get_loc(idx) + 1] if df_tail.index.get_loc(idx) + 1 < len(df_tail.index) else None
                 if next_idx:
-                    if df.at[idx, col] > df.at[next_idx, col]:
+                    if df_tail.at[idx, col] > df_tail.at[next_idx, col]:
                         return 'color: green'
-                    elif df.at[idx, col] < df.at[next_idx, col]:
+                    elif df_tail.at[idx, col] < df_tail.at[next_idx, col]:
                         return 'color: red'
                     else:
                         return 'color: gray'
@@ -84,14 +81,14 @@ if query:
                 return ''
             return ''
 
-        styled_df = df.style.applymap(lambda v: 'color: gray', subset=["Open", "High", "Low", "Close"])
+        styled_df = df_tail.style.applymap(lambda v: 'color: gray', subset=["Open", "High", "Low", "Close"])
         for col in ["Open", "High", "Low", "Close"]:
             styled_df = styled_df.apply(lambda s: [kleur_koers(s, col) for _ in s], subset=[col])
 
         st.dataframe(styled_df, use_container_width=True)
 
-else:
-    st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
+    else:
+        st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
 
 
 
@@ -110,9 +107,4 @@ else:
 
 
 
-
-
- # witte
-
-
-
+# wit
