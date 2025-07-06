@@ -80,6 +80,11 @@ if query:
         else:
             df_tail = df.tail(20)
 
+        # 🔢 Afronden op 3 decimalen
+        for kolom in ["Open", "High", "Low", "Close"]:
+            if kolom in df_tail.columns:
+                df_tail[kolom] = df_tail[kolom].round(3)
+
         def kleur_koers_kolom(series):
             kleuren = []
             for i in range(len(series)):
@@ -100,8 +105,6 @@ if query:
                 styled_df = styled_df.apply(kleur_koers_kolom, subset=[kolom])
 
         st.dataframe(styled_df, use_container_width=True)
-        
-
 
 
 
