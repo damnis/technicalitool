@@ -37,7 +37,7 @@ if query:
         st.success(f"✅ Gegevens opgehaald: {len(df)} datapunten")
 
         # 📈 Candlestick-grafiek
-        fig = draw_candlestick_chart(df, query, overlay_lijnen, interval_keuze, periode_keuze)
+        fig = draw_candlestick_chart(df, query, overlay_lijnen, periode_keuze)
    #     fig = draw_candlestick_chart(df, query, overlay_lijnen)
         st.plotly_chart(fig, use_container_width=True)
 
