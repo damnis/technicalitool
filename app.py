@@ -10,7 +10,26 @@ st.set_page_config(page_title="📈 Technicalitool", layout="wide")
 st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
 
 # 🔍 Ticker input
-query = st.text_input("Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
+# 🔍 Zoekfunctie via FMP (op naam of ticker)
+@st.cache_data(ttl=86400)
+def fmp_symbol_search(query):
+    url = f"https://financialmodelingprep.com/api/v3/search-name?query={query}&limit=20&apikey=D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"
+    r = requests.get(url)
+    return r.json() if r.status_code == 200 else []
+
+st.markdown("### 🔍 Zoek aandeel (op naam of ticker)")
+zoekterm = st.text_input("Typ bijvoorbeeld 'Apple' of 'AAPL'", value="Apple")
+
+query = None
+if zoekterm:
+    resultaten = fmp_symbol_search(zoekterm)
+    opties = [f"{r['symbol']} — {r['name']} ({r['stockExchange']})" for r in resultaten]
+    if opties:
+        keuze = st.selectbox("Selecteer aandeel", opties)
+        query = keuze.split(" — ")[0]
+    else:
+        st.warning("❌ Geen resultaten gevonden voor deze zoekterm.")
+#query = st.text_input("Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
 
 # 📅 Periode selectie
 st.markdown("### Periode")
