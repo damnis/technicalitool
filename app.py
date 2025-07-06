@@ -18,10 +18,10 @@ tot = st.date_input("Einddatum", datetime.today())
 
 # Indicator keuzes
 st.markdown("### Overlay Indicatoren")
-overlay_lijnen = st.multiselect("Selecteer lijnen op grafiek", ["MA20", "MA50", "Bollinger Bands"], default=["MA20"])
+overlay_lijnen = st.multiselect("Selecteer lijnen op grafiek", ["MA20", "MA50", "MA200", "Bollinger"], default=["MA20"])
 
 st.markdown("### Onderliggende Indicatoren")
-onder_grafiek = st.multiselect("Kies extra grafieken", ["Volume"], default=["Volume"])
+onder_grafiek = st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"], default=["Volume"])
 
 # Gegevens ophalen
 @st.cache_data(ttl=3600)
@@ -34,49 +34,63 @@ def get_data(ticker, periode, start, end):
         return None, None
 
 if query:
+    ticker = query
     data, data_custom = get_data(query, periode_keuze, vanaf, tot)
 
     if data is not None and not data.empty:
-        st.subheader(f"📊 Koersgrafiek: {query}")
+        df = data.copy()
 
+        # Bereken indicatoren indien nodig
+        if "MA20" in overlay_lijnen:
+            df["MA20"] = df["Close"].rolling(window=20).mean()
+        if "MA50" in overlay_lijnen:
+            df["MA50"] = df["Close"].rolling(window=50).mean()
+        if "MA200" in overlay_lijnen:
+            df["MA200"] = df["Close"].rolling(window=200).mean()
+        if "Bollinger" in overlay_lijnen:
+            ma20 = df["Close"].rolling(window=20).mean()
+            std20 = df["Close"].rolling(window=20).std()
+            df["BB_upper"] = ma20 + 2 * std20
+            df["BB_lower"] = ma20 - 2 * std20
+
+        # 📊 Candlestick-grafiek met overlays
         fig = go.Figure()
 
-        # Candlestick
+        # Voeg candlestick toe
         fig.add_trace(go.Candlestick(
-            x=data.index,
-            open=data['Open'],
-            high=data['High'],
-            low=data['Low'],
-            close=data['Close'],
-            name='Candlestick'
+            x=df.index,
+            open=df["Open"],
+            high=df["High"],
+            low=df["Low"],
+            close=df["Close"],
+            name="Candlestick"
         ))
 
-        # Overlay lijnen
+        # Voeg overlays toe
         if "MA20" in overlay_lijnen:
-            data['MA20'] = data['Close'].rolling(window=20).mean()
-            fig.add_trace(go.Scatter(x=data.index, y=data['MA20'], line=dict(width=1.5), name='MA20'))
-
+            fig.add_trace(go.Scatter(x=df.index, y=df["MA20"], mode="lines", name="MA 20"))
         if "MA50" in overlay_lijnen:
-            data['MA50'] = data['Close'].rolling(window=50).mean()
-            fig.add_trace(go.Scatter(x=data.index, y=data['MA50'], line=dict(width=1.5), name='MA50'))
+            fig.add_trace(go.Scatter(x=df.index, y=df["MA50"], mode="lines", name="MA 50"))
+        if "MA200" in overlay_lijnen:
+            fig.add_trace(go.Scatter(x=df.index, y=df["MA200"], mode="lines", name="MA 200"))
+        if "Bollinger" in overlay_lijnen:
+            fig.add_trace(go.Scatter(x=df.index, y=df["BB_upper"], mode="lines", name="BB Upper", line=dict(dash="dot")))
+            fig.add_trace(go.Scatter(x=df.index, y=df["BB_lower"], mode="lines", name="BB Lower", line=dict(dash="dot")))
 
-        if "Bollinger Bands" in overlay_lijnen:
-            ma20 = data['Close'].rolling(window=20).mean()
-            std20 = data['Close'].rolling(window=20).std()
-            upper = ma20 + (2 * std20)
-            lower = ma20 - (2 * std20)
-            fig.add_trace(go.Scatter(x=data.index, y=upper, line=dict(width=1, dash='dot'), name='Bollinger Upper'))
-            fig.add_trace(go.Scatter(x=data.index, y=lower, line=dict(width=1, dash='dot'), name='Bollinger Lower'))
-
+        # Grafiek opmaak
         fig.update_layout(
-            height=600,
-            margin=dict(l=20, r=20, t=40, b=20),
+            title=f"📈 Koersgrafiek: {ticker}",
+            xaxis_title="Datum",
+            yaxis_title="Prijs",
             xaxis_rangeslider_visible=False,
-            template="plotly_white"
+            template="plotly_white",
+            height=600
         )
 
         st.plotly_chart(fig, use_container_width=True)
+        
 
+        
         # Extra grafieken
         if "Volume" in onder_grafiek:
             st.subheader("📉 Volume")
