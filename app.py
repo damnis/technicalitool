@@ -81,8 +81,7 @@ if query:
             df_tail = df.tail(20).copy()
 
         # 🔢 Afronden alle numerieke kolommen op 3 decimalen
-        for col in df_tail.select_dtypes(include=["float", "int"]).columns:
-            df_tail[col] = df_tail[col].round(3)
+        df_tail = df_tail.round(3)
 
         # 🎨 Kleur per koerskolom (alleen Open, High, Low, Close)
         def kleur_koers_kolom(series):
@@ -105,10 +104,8 @@ if query:
             if kolom in df_tail.columns:
                 styled_df = styled_df.apply(kleur_koers_kolom, subset=[kolom])
 
-        # 🖥️ Tabel tonen
+        # 📊 Tabel tonen
         st.dataframe(styled_df, use_container_width=True)
-
-
 
 
 
