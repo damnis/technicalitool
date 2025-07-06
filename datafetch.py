@@ -46,10 +46,10 @@ def draw_candlestick_chart(df, ticker, selected_lines):
     candledate = yf.download(ticker)
     fig.add_trace(go.Candlestick(
         x=candledate.index,
-        open=df["Open"],
-        high=df["High"],
-        low=df["Low"],
-        close=df["Close"],
+        open=candledate["Open"],
+        high=candledate["High"],
+        low=candledate["Low"],
+        close=candledate["Close"],
         name="Candlestick"
     ))
 
