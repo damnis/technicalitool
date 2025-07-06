@@ -3,7 +3,7 @@ import pandas as pd
 import yfinance as yf
 import plotly.graph_objs as go
 from datetime import datetime, timedelta
-from datafetch import fetch_chart_data, fetch_raw_candlestick_data, draw_candlestick_chart
+from datafetch import fetch_chart_data, fetch_raw_candlestick_data, draw_custom_candlestick_chart
 
 st.set_page_config(page_title="📈 Technicalitool", layout="wide")
 st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
