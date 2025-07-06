@@ -60,7 +60,7 @@ if query:
         df.index = pd.to_datetime(df.index)  # altijd even expliciet zetten
 
         fig.add_trace(go.Candlestick(
-            x=pd.to_datetime(df.index).date,
+   #         x=pd.to_datetime(df.index).date,
    #         x=df.index.strftime("%Y-%m-%d"),  # werkt op Streamlit/Plotly Cloud
             open=df["Open"],
             high=df["High"],
