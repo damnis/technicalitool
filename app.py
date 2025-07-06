@@ -1,4 +1,43 @@
-# 📊 Tabel met toggle (nu bovenaan)
+import streamlit as st
+import pandas as pd
+import yfinance as yf
+import plotly.graph_objs as go
+from datetime import datetime, timedelta
+from datafetch import fetch_chart_data, fetch_raw_candlestick_data, draw_candlestick_chart
+
+st.set_page_config(page_title="📈 Technicalitool", layout="wide")
+st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
+
+# 🔍 Ticker input
+query = st.text_input("Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
+
+# 📅 Periode selectie
+st.markdown("### Periode")
+periode_keuze = st.selectbox("Kies standaardperiode", [
+    "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "3y", "5y", "10y", "ytd", "max"
+], index=5)
+vanaf = st.date_input("Startdatum", datetime.today() - timedelta(days=365))
+tot = st.date_input("Einddatum", datetime.today())
+
+# 📏 Overlay indicatoren
+st.markdown("### Overlay Indicatoren")
+overlay_lijnen = st.multiselect(
+    "Selecteer lijnen op grafiek", ["MA20", "MA50", "MA200", "Bollinger Bands"], default=["MA20"]
+)
+
+# 📉 Onderliggende grafieken (nog niet verwerkt)
+st.markdown("### Onderliggende Indicatoren")
+onder_grafiek = st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"], default=["Volume"])
+
+# ✅ Data ophalen en tonen
+if query:
+    overlay_df = fetch_chart_data(query, periode_keuze)
+    candle_df = fetch_raw_candlestick_data(query, periode_keuze)
+
+    if not overlay_df.empty and not candle_df.empty:
+        st.success(f"✅ Gegevens opgehaald: {len(candle_df)} datapunten")
+
+        # 📊 Tabel met toggle (nu bovenaan)
 if not overlay_df.empty and not candle_df.empty:
     st.success(f"✅ Gegevens opgehaald: {len(candle_df)} datapunten")
 
@@ -52,20 +91,3 @@ if not overlay_df.empty and not candle_df.empty:
         styled_df = styled_df.apply(lambda s: [kleur_koers(s, col) for _ in s], subset=[col])
 
     st.dataframe(styled_df, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
-
-
- # wit
-
-
-
-
