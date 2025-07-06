@@ -73,7 +73,7 @@ def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]):
             x=[df.index[i], df.index[i]],
             y=[df["Open"][i], df["Close"][i]],
             mode="lines",
-            line=dict(color=kleur, width=6),
+            line=dict(color=kleur, width=3),
             showlegend=False,
             hoverinfo="text",
             text=f"Open: {df['Open'][i]:.2f}<br>Close: {df['Close'][i]:.2f}"
