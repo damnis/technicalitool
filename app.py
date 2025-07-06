@@ -1,100 +1,57 @@
-import streamlit as st
-import pandas as pd
-import yfinance as yf
-import plotly.graph_objs as go
-from datetime import datetime, timedelta
-from datafetch import fetch_chart_data, draw_candlestick_chart
+# 📊 Tabel met toggle (nu bovenaan)
+if not overlay_df.empty and not candle_df.empty:
+    st.success(f"✅ Gegevens opgehaald: {len(candle_df)} datapunten")
 
-st.set_page_config(page_title="📈 Technicalitool", layout="wide")
-st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
+    with st.expander("📋 Laatste 100 koersregels"):
+        toon_aantal = st.radio("Aantal rijen tonen:", [20, 50, 100], horizontal=True)
+        df_display = overlay_df.tail(toon_aantal).copy()
 
-# 🔍 Ticker input
-query = st.text_input("Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
+        # 🎨 Kleur op koersbeweging
+        for kolom in ["Close", "Open", "High", "Low"]:
+            if kolom in df_display.columns:
+                df_display[kolom] = df_display[kolom].round(2)
 
-# 📅 Periode selectie
-st.markdown("### Periode")
-periode_keuze = st.selectbox("Kies standaardperiode", [
-    "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "3y", "5y", "10y", "ytd", "max"
-], index=5)
-vanaf = st.date_input("Startdatum", datetime.today() - timedelta(days=365))
-tot = st.date_input("Einddatum", datetime.today())
+        st.dataframe(df_display)
 
-# 📏 Overlay indicatoren
-st.markdown("### Overlay Indicatoren")
-overlay_lijnen = st.multiselect(
-    "Selecteer lijnen op grafiek", ["MA20", "MA50", "MA200", "Bollinger Bands"], default=["MA20"]
-)
+    # 📈 Candlestick-grafiek direct onder tabel
+    fig = draw_candlestick_chart(candle_df, overlay_df, query, overlay_lijnen)
+    st.plotly_chart(fig, use_container_width=True)
 
-# 📉 Onderliggende grafieken (nog niet verwerkt)
-st.markdown("### Onderliggende Indicatoren")
-st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"], default=["Volume"])
+    # 📉 Extra grafiek direct onder koersgrafiek
+    if "Volume" in onder_grafiek:
+        st.subheader("📉 Volume")
+        vol_fig = go.Figure()
+        vol_fig.add_trace(go.Bar(x=candle_df.index, y=candle_df['Volume'], name='Volume'))
+        vol_fig.update_layout(height=200, margin=dict(l=20, r=20, t=20, b=20), template="plotly_white")
+        st.plotly_chart(vol_fig, use_container_width=True)
 
-# ✅ Data ophalen en tonen
-if query:
-    df = fetch_chart_data(query, periode_keuze)
-
-    if not df.empty:
-        st.success(f"✅ Gegevens opgehaald: {len(df)} datapunten")
-
-        # 📈 Candlestick-grafiek
-        fig = draw_candlestick_chart(df, query, overlay_lijnen, periode_keuze)
-   #     fig = draw_candlestick_chart(df, query, overlay_lijnen)
-        st.plotly_chart(fig, use_container_width=True)
-
-        # 📊 Tabel met toggle
-        with st.expander("📋 Laatste 100 koersregels"):
-            toon_aantal = st.radio("Aantal rijen tonen:", [20, 50, 100], horizontal=True)
-            df_display = df.tail(toon_aantal).copy()
-
-            # 🎨 Kleur op koersbeweging (optioneel verbeterbaar met styling)
-            for kolom in ["Close", "Open", "High", "Low"]:
-                if kolom in df_display.columns:
-                    df_display[kolom] = df_display[kolom].round(2)
-
-            st.dataframe(df_display)
+    # 📋 Koersdata opnieuw met kleuring toggle
+    st.markdown("### 📋 Koersdata (kleur per kolom)")
+    if st.toggle("Toon laatste 100 regels"):
+        df = overlay_df.tail(100)
     else:
-        st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
+        df = overlay_df.tail(20)
 
-        
-        
-        # Extra grafieken
-        if "Volume" in onder_grafiek:
-            st.subheader("📉 Volume")
-            vol_fig = go.Figure()
-            vol_fig.add_trace(go.Bar(x=data.index, y=data['Volume'], name='Volume'))
-            vol_fig.update_layout(height=200, margin=dict(l=20, r=20, t=20, b=20), template="plotly_white")
-            st.plotly_chart(vol_fig, use_container_width=True)
-
-        # Tabel kort en lang
-        st.markdown("### 📋 Koersdata (laatste 20 / alle 100)")
-        if st.toggle("Toon laatste 100 regels"):
-            df = data_custom.tail(100)
-        else:
-            df = data_custom.tail(20)
-
-        def kleur_koers(val, col):
-            try:
-                idx = val.name
-                next_idx = df.index[df.index.get_loc(idx) + 1] if df.index.get_loc(idx) + 1 < len(df.index) else None
-                if next_idx:
-                    if df.at[idx, col] > df.at[next_idx, col]:
-                        return 'color: green'
-                    elif df.at[idx, col] < df.at[next_idx, col]:
-                        return 'color: red'
-                    else:
-                        return 'color: gray'
-            except:
-                return ''
+    def kleur_koers(val, col):
+        try:
+            idx = val.name
+            next_idx = df.index[df.index.get_loc(idx) + 1] if df.index.get_loc(idx) + 1 < len(df.index) else None
+            if next_idx:
+                if df.at[idx, col] > df.at[next_idx, col]:
+                    return 'color: green'
+                elif df.at[idx, col] < df.at[next_idx, col]:
+                    return 'color: red'
+                else:
+                    return 'color: gray'
+        except:
             return ''
+        return ''
 
-        styled_df = df.style.applymap(lambda v: 'color: gray', subset=["Open", "High", "Low", "Close"])
-        for col in ["Open", "High", "Low", "Close"]:
-            styled_df = styled_df.apply(lambda s: [kleur_koers(s, col) for _ in s], subset=[col])
+    styled_df = df.style.applymap(lambda v: 'color: gray', subset=["Open", "High", "Low", "Close"])
+    for col in ["Open", "High", "Low", "Close"]:
+        styled_df = styled_df.apply(lambda s: [kleur_koers(s, col) for _ in s], subset=[col])
 
-        st.dataframe(styled_df, use_container_width=True)
-
-else:
-    st.warning("❌ Ticker niet gevonden of geen data beschikbaar.")
+    st.dataframe(styled_df, use_container_width=True)
 
 
 
@@ -107,21 +64,7 @@ else:
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-# wit
-
+ # wit
 
 
 
