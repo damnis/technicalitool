@@ -18,25 +18,31 @@ def fmp_symbol_search(query):
     return r.json() if r.status_code == 200 else []
 
 st.markdown("### 🔍 Zoek aandeel (op naam of ticker)")
-zoekterm = st.text_input("Typ bijvoorbeeld 'Apple', 'SMCI' of 'AAPL'", value="Apple")
+# Na het invullen van het zoekveld:
+zoekterm = st.text_input("Zoek aandeel", value="Apple").strip().upper()
 
-query = None
-if zoekterm:
-    fmp_hits = fmp_symbol_search(zoekterm)
-    
-    # Filter op tickers die ook data teruggeven in yfinance
+# Eerst FMP zoeken
+fmp_hits = fmp_symbol_search(zoekterm)
+
+# Als FMP niks vindt, maar yfinance wel: gebruik gewoon die ticker
+if not fmp_hits and is_valid_yfinance_ticker(zoekterm):
+    query = zoekterm
+    st.info(f"🔎 '{zoekterm}' direct geaccepteerd via yfinance.")
+elif fmp_hits:
+    # Filter op yfinance geldige tickers
     geldige_hits = []
     for hit in fmp_hits:
         sym = hit["symbol"]
         if is_valid_yfinance_ticker(sym):
             geldige_hits.append(f"{sym} — {hit['name']} ({hit['stockExchange']})")
-
     if geldige_hits:
-        keuze = st.selectbox("Selecteer aandeel (alleen yfinance-compatibel)", geldige_hits)
+        keuze = st.selectbox("Selecteer aandeel", geldige_hits)
         query = keuze.split(" — ")[0]
     else:
-        st.warning("❌ Geen bruikbare tickers gevonden voor yfinance.")
-        
+        st.warning("⚠️ Geen geldige tickers gevonden.")
+else:
+    st.warning("⚠️ Geen resultaten gevonden.")
+    
 #query = st.text_input("Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
 
 # 📅 Periode selectie
