@@ -48,6 +48,11 @@ def fetch_data(ticker, interval):
     else:
         period = "25y"  # fallback
 
+    # ->>>>> aanpassen naar deze periode met maximale fetch
+#    "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"], index=5)
+#vanaf = st.date_input("Startdatum", datetime.today() - timedelta(days=365))
+#tot = st.date_input("Einddatum", datetime.today())
+
     # ⬇️ Ophalen via gecachete functie
     df = fetch_data_cached(ticker, interval, period)
 
@@ -80,6 +85,11 @@ def fetch_data(ticker, interval):
 
 
 # 📆 Periode voor candlestick-grafiek op basis van realtime
+# Hier eerst gebruik juiste 'date' (voor x-as) opnieuw instellen denk ik
+# overigens had ik de xas ook al zonder defi itie in de candlestick grafiek geprobeerd,
+# maar dan begint de grafiek standaard te ver in de oorspronkelijke geschiedenis, vandaar 
+# onderstaande grafiekperiode 
+# 
 def bepaal_grafiekperiode(interval):
     if interval == "15m":
         return timedelta(days=7)        # 7 dagen à ~96 candles per dag = ±672 punten
@@ -97,7 +107,10 @@ def bepaal_grafiekperiode(interval):
         return timedelta(weeks=260)     # Fallback = 5 jaar
 
 
-
+# ->>>>> aanpassen naar deze periode met maximale fetch
+#    "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"], index=5)
+# Dit deel dangebruken om echte 'date' te fetchen voor de candlestick grafiek, waarbij
+# grafiekperiode van gelang is voor de weergave van lange ma lijnen ma200 bijvoorbeeld
 
 
 
