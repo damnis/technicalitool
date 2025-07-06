@@ -4,7 +4,7 @@ import yfinance as yf
 import requests
 import plotly.graph_objs as go
 from datetime import datetime, timedelta
-from datafetch import fetch_data, draw_custom_candlestick_chart
+from datafetch import fetch_data, draw_custom_candlestick_chart, is_valid_yfinance_ticker 
 
 st.set_page_config(page_title="📈 Technicalitool", layout="wide")
 st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
