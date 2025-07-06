@@ -64,7 +64,7 @@ def draw_candlestick_chart(candle_dfc, overlay_dfc, ticker, selected_lines):
         low=candle_dfc["Low"],
         close=candle_dfc["Close"],
         increasing_line_color = 'purple',
-        decreasing_line_color = 'orange')])
+        decreasing_line_color = 'orange',
         name="Candlestick"
     ))
 
