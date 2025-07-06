@@ -3,7 +3,7 @@ import pandas as pd
 import yfinance as yf
 import plotly.graph_objs as go
 from datetime import datetime, timedelta
-from datafetch import fetch_chart_data, fetch_raw_candlestick_data, draw_custom_candlestick_chart
+from datafetch import fetch_data, draw_custom_candlestick_chart
 
 st.set_page_config(page_title="📈 Technicalitool", layout="wide")
 st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
@@ -31,16 +31,15 @@ onder_grafiek = st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"]
 
 # ✅ Data ophalen en tonen
 if query:
-    overlay_df = fetch_chart_data(query, periode_keuze)
-    candle_df = fetch_raw_candlestick_data(query, periode_keuze)
+    df = fetch_data(query, periode_keuze)
 
-    if not overlay_df.empty and not candle_df.empty:
-        st.success(f"✅ Gegevens opgehaald: {len(candle_df)} datapunten")
+    if not df.empty:
+        st.success(f"✅ Gegevens opgehaald: {len(df)} datapunten")
 
         # 📋 Tabel bovenaan
         with st.expander("📋 Laatste 100 koersregels"):
             toon_aantal = st.radio("Aantal rijen tonen:", [20, 50, 100], horizontal=True)
-            df_display = overlay_df.tail(toon_aantal).copy()
+            df_display = df.tail(toon_aantal).copy()
 
             for kolom in ["Close", "Open", "High", "Low"]:
                 if kolom in df_display.columns:
@@ -48,21 +47,21 @@ if query:
 
             st.dataframe(df_display)
 
-        st.write("Kolommen in candle_df:", candle_df.columns.tolist())
-        st.dataframe(candle_df.head())
-        
-        # 📈 Candlestick-grafiek
-        fig = draw_custom_candlestick_chart(candle_df, overlay_df, query, overlay_lijnen)
+        # 📈 Candlestick-grafiek met overlay
+        fig = draw_custom_candlestick_chart(df, query, overlay_lijnen)
         st.plotly_chart(fig, use_container_width=True)
 
-        # 📉 Extra grafiek onder koersgrafiek
+        # 📉 Extra grafiek onder candlestick
         if "Volume" in onder_grafiek:
             st.subheader("📉 Volume")
             vol_fig = go.Figure()
-            vol_fig.add_trace(go.Bar(x=candle_df.index, y=candle_df['Volume'], name='Volume'))
+            vol_fig.add_trace(go.Bar(x=df.index, y=df['Volume'], name='Volume'))
             vol_fig.update_layout(height=200, margin=dict(l=20, r=20, t=20, b=20), template="plotly_white")
             st.plotly_chart(vol_fig, use_container_width=True)
 
+    else:
+        st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
+        
         # 📋 Kleurtabel onderaan
         st.markdown("### 📋 Koersdata (kleur per kolom)")
         if st.toggle("Toon laatste 100 regels"):
