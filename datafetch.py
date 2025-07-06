@@ -63,8 +63,14 @@ def draw_candlestick_chart(candle_dfc, overlay_dfc, ticker, selected_lines):
         high=candle_dfc["High"],
         low=candle_dfc["Low"],
         close=candle_dfc["Close"],
+        increasing_line_color = 'purple',
+        decreasing_line_color = 'orange')])
         name="Candlestick"
     ))
+
+    # Mask a default range slider
+    fig.update_layout(xaxis_rangeslider_visible=False)
+
 
     # Overlay indicators (berekend uit overlay_df met datetime index)
     if not overlay_dfc.empty:
