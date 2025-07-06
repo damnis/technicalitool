@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import yfinance as yf
+import requests
 import plotly.graph_objs as go
 from datetime import datetime, timedelta
 from datafetch import fetch_data, draw_custom_candlestick_chart
