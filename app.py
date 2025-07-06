@@ -99,7 +99,7 @@ if query:
             return kleuren
 
         # 🖌️ Stijl toepassen
-        styled_df = df_tail.style
+        styled_df = df_tail.style.format("{:.3f}")
         for kolom in ["Open", "High", "Low", "Close"]:
             if kolom in df_tail.columns:
                 styled_df = styled_df.apply(kleur_koers_kolom, subset=[kolom])
