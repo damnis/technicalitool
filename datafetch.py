@@ -43,9 +43,9 @@ def fetch_chart_data(ticker, periode):
 # ✅ Teken candlestick-grafiek met overlays
 def draw_candlestick_chart(df, ticker, selected_lines):
     fig = go.Figure()
-
+    candledate = yf.download(ticker,period=periode, interval=interval)
     fig.add_trace(go.Candlestick(
-        x=df.index,
+        x=candledate.index,
         open=df["Open"],
         high=df["High"],
         low=df["Low"],
