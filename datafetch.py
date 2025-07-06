@@ -3,6 +3,14 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
+@st.cache_data(ttl=86400)
+def is_valid_yfinance_ticker(ticker):
+    try:
+        df = yf.Ticker(ticker).history(period="1d")
+        return not df.empty
+    except:
+        return False
+
 # 🔁 Slimme intervalkeuze obv periode
 def bepaal_interval(periode):
     if periode in ["1d", "5d"]:
