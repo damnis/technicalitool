@@ -58,7 +58,7 @@ def draw_candlestick_chart(candle_dfc, overlay_dfc, ticker, selected_lines):
 
     # Candlestick trace (ruwe data)
     fig.add_trace(go.Candlestick(
-        x=candle_dfc.index,
+#        x=candle_dfc.index,
         open=candle_dfc["Open"],
         high=candle_dfc["High"],
         low=candle_dfc["Low"],
