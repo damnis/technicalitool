@@ -47,7 +47,7 @@ def fetch_raw_candlestick_data(ticker, periode):
     interval = bepaal_interval(periode)
     dfc = yf.download(ticker, period=periode, interval=interval)
 
-    if dfc.empty or "Close" not in df.columns:
+    if dfc.empty or "Close" not in dfc.columns:
         return pd.DataFrame()
 
     return dfc  # géén datetime conversie op index!
