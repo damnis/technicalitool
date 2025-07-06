@@ -57,7 +57,7 @@ def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]):
 
     for i in range(len(df)):
         # Wick (Low - High)
-        kleur = "green" if df["High"][i] > df["Low"][i] else "red"
+        kleur = "green" if df["Close"][i] > df["Open"][i] else "red"
         fig.add_trace(go.Scatter(
             x=[df.index[i], df.index[i]],
             y=[df["Low"][i], df["High"][i]],
