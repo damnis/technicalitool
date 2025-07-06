@@ -18,17 +18,25 @@ def fmp_symbol_search(query):
     return r.json() if r.status_code == 200 else []
 
 st.markdown("### 🔍 Zoek aandeel (op naam of ticker)")
-zoekterm = st.text_input("Typ bijvoorbeeld 'Apple' of 'AAPL'", value="Apple")
+zoekterm = st.text_input("Typ bijvoorbeeld 'Apple', 'SMCI' of 'AAPL'", value="Apple")
 
 query = None
 if zoekterm:
-    resultaten = fmp_symbol_search(zoekterm)
-    opties = [f"{r['symbol']} — {r['name']} ({r['stockExchange']})" for r in resultaten]
-    if opties:
-        keuze = st.selectbox("Selecteer aandeel", opties)
+    fmp_hits = fmp_symbol_search(zoekterm)
+    
+    # Filter op tickers die ook data teruggeven in yfinance
+    geldige_hits = []
+    for hit in fmp_hits:
+        sym = hit["symbol"]
+        if is_valid_yfinance_ticker(sym):
+            geldige_hits.append(f"{sym} — {hit['name']} ({hit['stockExchange']})")
+
+    if geldige_hits:
+        keuze = st.selectbox("Selecteer aandeel (alleen yfinance-compatibel)", geldige_hits)
         query = keuze.split(" — ")[0]
     else:
-        st.warning("❌ Geen resultaten gevonden voor deze zoekterm.")
+        st.warning("❌ Geen bruikbare tickers gevonden voor yfinance.")
+        
 #query = st.text_input("Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
 
 # 📅 Periode selectie
