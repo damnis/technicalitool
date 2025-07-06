@@ -73,33 +73,34 @@ if query:
             vol_fig.update_layout(height=200, margin=dict(l=20, r=20, t=20, b=20), template="plotly_white")
             st.plotly_chart(vol_fig, use_container_width=True)
 
-        # 📋 Kleurtabel onderaan
+        ## 📋 Koersdata (kleur per kolom)
         st.markdown("### 📋 Koersdata (kleur per kolom)")
         if st.toggle("Toon laatste 100 regels"):
             df_tail = df.tail(100)
         else:
             df_tail = df.tail(20)
 
-        def kleur_koers_kolom(kolom):
+        def kleur_koers_kolom(series):
             kleuren = []
-            for i in range(len(df_tail)):
-                if i + 1 < len(df_tail):
-                    if df_tail[kolom].iloc[i] > df_tail[kolom].iloc[i + 1]:
+            for i in range(len(series)):
+                if i + 1 < len(series):
+                    if series.iloc[i] > series.iloc[i + 1]:
                         kleuren.append('color: green')
-                    elif df_tail[kolom].iloc[i] < df_tail[kolom].iloc[i + 1]:
+                    elif series.iloc[i] < series.iloc[i + 1]:
                         kleuren.append('color: red')
                     else:
                         kleuren.append('color: gray')
                 else:
-                    kleuren.append('color: gray')  # Laatste regel
+                    kleuren.append('color: gray')
             return kleuren
 
         styled_df = df_tail.style
         for kolom in ["Open", "High", "Low", "Close"]:
-            styled_df = styled_df.apply(kleur_koers_kolom, subset=[kolom])
+            if kolom in df_tail.columns:
+                styled_df = styled_df.apply(kleur_koers_kolom, subset=[kolom])
 
         st.dataframe(styled_df, use_container_width=True)
-
+        
 
 
 
