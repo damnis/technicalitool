@@ -4,44 +4,24 @@ import yfinance as yf
 import requests
 import plotly.graph_objs as go
 from datetime import datetime, timedelta
-from datafetch import fetch_data, draw_custom_candlestick_chart, is_valid_yfinance_ticker 
+from datafetch import fetch_data, draw_custom_candlestick_chart, search_ticker
+
 
 st.set_page_config(page_title="📈 Technicalitool", layout="wide")
 st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
 
 # 🔍 Ticker input
-# 🔍 Zoekfunctie via FMP (op naam of ticker)
-@st.cache_data(ttl=86400)
-def fmp_symbol_search(query):
-    url = f"https://financialmodelingprep.com/api/v3/search-name?query={query}&limit=20&apikey=D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"
-    r = requests.get(url)
-    return r.json() if r.status_code == 200 else []
+zoekterm = st.text_input("🔍 Zoek op naam of ticker", value="AAPL").strip()
 
-st.markdown("### 🔍 Zoek aandeel (op naam of ticker)")
-# Na het invullen van het zoekveld:
-zoekterm = st.text_input("Zoek aandeel", value="Apple").strip().upper()
+suggesties = search_ticker(zoekterm)
 
-# Eerst FMP zoeken
-fmp_hits = fmp_symbol_search(zoekterm)
-
-# Als FMP niks vindt, maar yfinance wel: gebruik gewoon die ticker
-if not fmp_hits and is_valid_yfinance_ticker(zoekterm):
-    query = zoekterm
-    st.info(f"🔎 '{zoekterm}' direct geaccepteerd via yfinance.")
-elif fmp_hits:
-    # Filter op yfinance geldige tickers
-    geldige_hits = []
-    for hit in fmp_hits:
-        sym = hit["symbol"]
-        if is_valid_yfinance_ticker(sym):
-            geldige_hits.append(f"{sym} — {hit['name']} ({hit['stockExchange']})")
-    if geldige_hits:
-        keuze = st.selectbox("Selecteer aandeel", geldige_hits)
-        query = keuze.split(" — ")[0]
-    else:
-        st.warning("⚠️ Geen geldige tickers gevonden.")
+if suggesties:
+    ticker_opties = [f"{sym} - {naam}" for sym, naam in suggesties]
+    selectie = st.selectbox("Kies ticker", ticker_opties, index=0)
+    query = selectie.split(" - ")[0]  # extract ticker
 else:
     st.warning("⚠️ Geen resultaten gevonden.")
+    query = ""
     
 #query = st.text_input("Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
 
