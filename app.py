@@ -8,92 +8,53 @@ from datafetch import fetch_chart_data, draw_candlestick_chart
 st.set_page_config(page_title="📈 Technicalitool", layout="wide")
 st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
 
-# Keuze ticker
-query = st.text_input("🔍 Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
+# 🔍 Ticker input
+query = st.text_input("Zoek op naam of ticker (bijv. Apple of AAPL)", value="AAPL").upper().strip()
 
-# Periode selectie
+# 📅 Periode selectie
 st.markdown("### Periode")
-periode_keuze = st.selectbox("Kies standaardperiode", ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"], index=5)
+periode_keuze = st.selectbox("Kies standaardperiode", [
+    "1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "3y", "5y", "10y", "ytd", "max"
+], index=5)
 vanaf = st.date_input("Startdatum", datetime.today() - timedelta(days=365))
 tot = st.date_input("Einddatum", datetime.today())
 
-# Indicator keuzes
+# 📏 Overlay indicatoren
 st.markdown("### Overlay Indicatoren")
-overlay_lijnen = st.multiselect("Selecteer lijnen op grafiek", ["Candlestick", "MA20", "MA50", "MA200", "Bollinger"], default=["MA20"])
+overlay_lijnen = st.multiselect(
+    "Selecteer lijnen op grafiek", ["MA20", "MA50", "MA200", "Bollinger Bands"], default=["MA20"]
+)
 
+# 📉 Onderliggende grafieken (nog niet verwerkt)
 st.markdown("### Onderliggende Indicatoren")
-onder_grafiek = st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"], default=["Volume"])
+st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"], default=["Volume"])
 
-# Gegevens ophalen
-@st.cache_data(ttl=3600)
-def get_data(ticker, periode, start, end):
-    try:
-        data = yf.download(ticker, period=periode)
-        data_custom = yf.download(ticker, start=start, end=end)
-        return data, data_custom
-    except:
-        return None, None
-
+# ✅ Data ophalen en tonen
 if query:
-    ticker = query
-    data, data_custom = get_data(query, periode_keuze, vanaf, tot)
+    df = fetch_chart_data(query, periode_keuze)
 
-    if data is not None and not data.empty:
-        df = data.copy()
+    if not df.empty:
+        st.success(f"✅ Gegevens opgehaald: {len(df)} datapunten")
 
-        # Bereken indicatoren indien nodig
-        if "MA20" in overlay_lijnen:
-            df["MA20"] = df["Close"].rolling(window=20).mean()
-        if "MA50" in overlay_lijnen:
-            df["MA50"] = df["Close"].rolling(window=50).mean()
-        if "MA200" in overlay_lijnen:
-            df["MA200"] = df["Close"].rolling(window=200).mean()
-        if "Bollinger" in overlay_lijnen:
-            ma20 = df["Close"].rolling(window=20).mean()
-            std20 = df["Close"].rolling(window=20).std()
-            df["BB_upper"] = ma20 + 2 * std20
-            df["BB_lower"] = ma20 - 2 * std20
-
-        # 📊 Candlestick-grafiek met overlays
-        fig = go.Figure()
-
-        # Voeg candlestick toe
-        df.index = pd.to_datetime(df.index)  # altijd even expliciet zetten
-
-        fig.add_trace(go.Candlestick(
-   #         x=pd.to_datetime(df.index).date,
-   #         x=df.index.strftime("%Y-%m-%d"),  # werkt op Streamlit/Plotly Cloud
-            open=df["Open"],
-            high=df["High"],
-            low=df["Low"],
-            close=df["Close"],
-            name="Candlestick"
-        ))
-
-        # Voeg overlays toe
-        if "MA20" in overlay_lijnen:
-            fig.add_trace(go.Scatter(x=df.index, y=df["MA20"], mode="lines", name="MA 20"))
-        if "MA50" in overlay_lijnen:
-            fig.add_trace(go.Scatter(x=df.index, y=df["MA50"], mode="lines", name="MA 50"))
-        if "MA200" in overlay_lijnen:
-            fig.add_trace(go.Scatter(x=df.index, y=df["MA200"], mode="lines", name="MA 200"))
-        if "Bollinger" in overlay_lijnen:
-            fig.add_trace(go.Scatter(x=df.index, y=df["BB_upper"], mode="lines", name="BB Upper", line=dict(dash="dot")))
-            fig.add_trace(go.Scatter(x=df.index, y=df["BB_lower"], mode="lines", name="BB Lower", line=dict(dash="dot")))
-
-        # Grafiek opmaak
-        fig.update_layout(
-            title=f"📈 Koersgrafiek: {ticker}",
-            xaxis_title="Datum",
-            yaxis_title="Prijs",
-            xaxis_rangeslider_visible=False,
-            template="plotly_white",
-            height=600
-        )
-
+        # 📈 Candlestick-grafiek
+        fig = draw_candlestick_chart(df, query, overlay_lijnen)
         st.plotly_chart(fig, use_container_width=True)
-        
 
+        # 📊 Tabel met toggle
+        with st.expander("📋 Laatste 100 koersregels"):
+            toon_aantal = st.radio("Aantal rijen tonen:", [20, 50, 100], horizontal=True)
+            df_display = df.tail(toon_aantal).copy()
+
+            # 🎨 Kleur op koersbeweging (optioneel verbeterbaar met styling)
+            for kolom in ["Close", "Open", "High", "Low"]:
+                if kolom in df_display.columns:
+                    df_display[kolom] = df_display[kolom].round(2)
+
+            st.dataframe(df_display)
+    else:
+        st.warning("⚠️ Geen geldige data gevonden voor deze ticker of periode.")
+
+        
         
         # Extra grafieken
         if "Volume" in onder_grafiek:
