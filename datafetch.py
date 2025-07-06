@@ -17,31 +17,39 @@ def bepaal_interval(periode):
         return "1mo"
 
 # ✅ Caching van volledige dataset (candlestick + overlays)
-@st.cache_data(ttl=900)
+@@st.cache_data(ttl=900)
 def fetch_data(ticker, periode):
     interval = bepaal_interval(periode)
-    df = yf.download(ticker, period=periode, interval=interval, group_by="ticker")
+    df = yf.download(ticker, period=periode, interval=interval)
 
     if df.empty:
         return pd.DataFrame()
 
-    # Flatten kolommen als nodig
+    # 🛡️ Fix voor MultiIndex zoals ('Close', 'AAPL')
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
 
+    # ✅ Check of Close-kolom aanwezig is
+    if "Close" not in df.columns:
+        st.warning(f"⚠️ 'Close'-kolom niet gevonden. Kolommen: {df.columns.tolist()}")
+        return pd.DataFrame()
+
+    # Datumindex naar datetime
     df.index = pd.to_datetime(df.index, errors="coerce")
     df = df[~df.index.isna()]
 
-    # MA & Bollinger
-    df["MA20"] = df["Close"].rolling(20, min_periods=1).mean()
-    df["MA50"] = df["Close"].rolling(50, min_periods=1).mean()
-    df["MA200"] = df["Close"].rolling(200, min_periods=1).mean()
-    df["BB_middle"] = df["Close"].rolling(20, min_periods=1).mean()
-    df["BB_std"] = df["Close"].rolling(20, min_periods=1).std()
+    # Indicatoren
+    df["MA20"] = df["Close"].rolling(window=20, min_periods=1).mean()
+    df["MA50"] = df["Close"].rolling(window=50, min_periods=1).mean()
+    df["MA200"] = df["Close"].rolling(window=200, min_periods=1).mean()
+
+    df["BB_middle"] = df["Close"].rolling(window=20, min_periods=1).mean()
+    df["BB_std"] = df["Close"].rolling(window=20, min_periods=1).std()
     df["BB_upper"] = df["BB_middle"] + 2 * df["BB_std"]
     df["BB_lower"] = df["BB_middle"] - 2 * df["BB_std"]
 
     return df
+    
 
 # ✅ Custom candlestick-plotter
 def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]):
