@@ -45,38 +45,38 @@ def fetch_chart_data(ticker, periode):
 @st.cache_data(ttl=900)
 def fetch_raw_candlestick_data(ticker, periode):
     interval = bepaal_interval(periode)
-    df = yf.download(ticker, period=periode, interval=interval)
+    dfc = yf.download(ticker, period=periode, interval=interval)
 
-    if df.empty or "Close" not in df.columns:
+    if dfc.empty or "Close" not in df.columns:
         return pd.DataFrame()
 
-    return df  # géén datetime conversie op index!
+    return dfc  # géén datetime conversie op index!
 
 # ✅ Teken candlestick-grafiek met overlays
-def draw_candlestick_chart(candle_df, overlay_df, ticker, selected_lines):
+def draw_candlestick_chart(candle_dfc, overlay_dfc, ticker, selected_lines):
     fig = go.Figure()
 
     # Candlestick trace (ruwe data)
     fig.add_trace(go.Candlestick(
-        x=candle_df.index,
-        open=candle_df["Open"],
-        high=candle_df["High"],
-        low=candle_df["Low"],
-        close=candle_df["Close"],
+        x=candle_dfc.index,
+        open=candle_dfc["Open"],
+        high=candle_dfc["High"],
+        low=candle_dfc["Low"],
+        close=candle_dfc["Close"],
         name="Candlestick"
     ))
 
     # Overlay indicators (berekend uit overlay_df met datetime index)
-    if not overlay_df.empty:
+    if not overlay_dfc.empty:
         if "MA20" in selected_lines:
-            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["MA20"], mode="lines", name="MA 20"))
+            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["MA20"], mode="lines", name="MA 20"))
         if "MA50" in selected_lines:
-            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["MA50"], mode="lines", name="MA 50"))
+            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["MA50"], mode="lines", name="MA 50"))
         if "MA200" in selected_lines:
-            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["MA200"], mode="lines", name="MA 200"))
+            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["MA200"], mode="lines", name="MA 200"))
         if "Bollinger Bands" in selected_lines:
-            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["BB_upper"], mode="lines", name="BB Upper", line=dict(dash="dot")))
-            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["BB_lower"], mode="lines", name="BB Lower", line=dict(dash="dot")))
+            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["BB_upper"], mode="lines", name="BB Upper", line=dict(dash="dot")))
+            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["BB_lower"], mode="lines", name="BB Lower", line=dict(dash="dot")))
 
     # Layout
     fig.update_layout(
