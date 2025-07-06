@@ -40,7 +40,7 @@ if query:
         # 📋 Tabel bovenaan
         with st.expander("📋 Laatste 100 koersregels"):
             toon_aantal = st.radio("Aantal rijen tonen:", [20, 50, 100], horizontal=True)
-            df_display = overlay_df.tail(toon_aantal).copy()
+            df_display = overlay_dfc.tail(toon_aantal).copy()
 
             for kolom in ["Close", "Open", "High", "Low"]:
                 if kolom in df_display.columns:
