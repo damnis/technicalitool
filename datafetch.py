@@ -8,8 +8,18 @@ from datetime import datetime, timedelta, date
 import matplotlib.pyplot as plt
 from ta.trend import ADXIndicator
 
+# geknipt uit app.py, oude wijze van ophalen data (verplaatst naar datafetch.py)
+@st.cache_data(ttl=3600)
+def get_data(ticker, periode, start, end):
+    try:
+        data = yf.download(ticker, period=periode)
+        data_custom = yf.download(ticker, start=start, end=end)
+        return data, data_custom
+    except:
+        return None, None
 
-#--- Functie om data op te halen ---
+
+#--- Verbeterde Functie om data op te halen ---
 # ✅ Gecachete downloadfunctie (15 minuten geldig)
 @st.cache_data(ttl=900)
 def fetch_data_cached(ticker, interval, period):
