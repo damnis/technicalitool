@@ -45,48 +45,56 @@ def fetch_chart_data(ticker, periode):
 @st.cache_data(ttl=900)
 def fetch_raw_candlestick_data(ticker, periode):
     interval = bepaal_interval(periode)
-    dfc = yf.download(ticker, period=periode, interval=interval)
+    df = yf.download(ticker, period=periode, interval=interval)
 
-    if dfc.empty or "Close" not in dfc.columns:
+    if df.empty or "Close" not in df.columns:
         return pd.DataFrame()
 
-    return dfc  # géén datetime conversie op index!
+    return df  # géén datetime conversie op index!
 
 # ✅ Teken candlestick-grafiek met overlays
-def draw_candlestick_chart(candle_dfc, overlay_dfc, ticker, selected_lines):
+def draw_custom_candlestick_chart(candle_df, overlay_df, ticker="", selected_lines=[]):
     fig = go.Figure()
 
-    # Candlestick trace (ruwe data)
-    fig.add_trace(go.Candlestick(
-#        x=candle_dfc.index,
-        open=candle_dfc["Open"],
-        high=candle_dfc["High"],
-        low=candle_dfc["Low"],
-        close=candle_dfc["Close"],
-        increasing_line_color = 'purple',
-        decreasing_line_color = 'orange',
-        name="Candlestick"
-    ))
+    # Wick: Low to High (dun streepje)
+    for i in range(len(candle_df)):
+        fig.add_trace(go.Scatter(
+            x=[candle_df.index[i], candle_df.index[i]],
+            y=[candle_df["Low"][i], candle_df["High"][i]],
+            mode="lines",
+            line=dict(color="gray", width=1),
+            showlegend=False,
+            hoverinfo='skip'
+        ))
 
-    # Mask a default range slider
-    fig.update_layout(xaxis_rangeslider_visible=False)
-
+    # Body: Open to Close (dik streepje, groen of rood)
+    for i in range(len(candle_df)):
+        kleur = "green" if candle_df["Close"][i] > candle_df["Open"][i] else "red"
+        fig.add_trace(go.Scatter(
+            x=[candle_df.index[i], candle_df.index[i]],
+            y=[candle_df["Open"][i], candle_df["Close"][i]],
+            mode="lines",
+            line=dict(color=kleur, width=6),
+            showlegend=False,
+            hoverinfo="text",
+            text=f"Open: {candle_df['Open'][i]:.2f}<br>Close: {candle_df['Close'][i]:.2f}"
+        ))
 
     # Overlay indicators (berekend uit overlay_df met datetime index)
-    if not overlay_dfc.empty:
+    if not overlay_df.empty:
         if "MA20" in selected_lines:
-            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["MA20"], mode="lines", name="MA 20"))
+            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["MA20"], mode="lines", name="MA 20"))
         if "MA50" in selected_lines:
-            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["MA50"], mode="lines", name="MA 50"))
+            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["MA50"], mode="lines", name="MA 50"))
         if "MA200" in selected_lines:
-            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["MA200"], mode="lines", name="MA 200"))
+            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["MA200"], mode="lines", name="MA 200"))
         if "Bollinger Bands" in selected_lines:
-            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["BB_upper"], mode="lines", name="BB Upper", line=dict(dash="dot")))
-            fig.add_trace(go.Scatter(x=overlay_dfc.index, y=overlay_dfc["BB_lower"], mode="lines", name="BB Lower", line=dict(dash="dot")))
+            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["BB_upper"], mode="lines", name="BB Upper", line=dict(dash="dot")))
+            fig.add_trace(go.Scatter(x=overlay_df.index, y=overlay_df["BB_lower"], mode="lines", name="BB Lower", line=dict(dash="dot")))
 
-    # Layout
+    # Opmaak
     fig.update_layout(
-        title=f"📈 Koersgrafiek: {ticker}",
+        title=f"📊 Aangepaste Candlestick-grafiek: {ticker}",
         xaxis_title="Datum",
         yaxis_title="Prijs",
         xaxis_rangeslider_visible=False,
@@ -95,14 +103,6 @@ def draw_candlestick_chart(candle_dfc, overlay_dfc, ticker, selected_lines):
     )
 
     return fig
-
-
-
-
-
-
-
-
 
 
 
