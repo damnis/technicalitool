@@ -48,6 +48,8 @@ if query:
 
             st.dataframe(df_display)
 
+        st.write("Kolommen in candle_df:", candle_df.columns.tolist())
+        st.dataframe(candle_df.head())
         # 📈 Candlestick-grafiek
         fig = draw_custom_candlestick_chart(candle_df, overlay_df, query, overlay_lijnen)
         st.plotly_chart(fig, use_container_width=True)
