@@ -2,14 +2,33 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import requests
+import streamlit as st
 
-@st.cache_data(ttl=86400)
-def is_valid_yfinance_ticker(ticker):
+@st.cache_data(ttl=3600)
+def search_ticker(query, fmp_api_key="D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"):
+    query = query.upper().strip()
+
+    # Probeer eerst of het een geldige yfinance-ticker is
     try:
-        df = yf.Ticker(ticker).history(period="1d")
-        return not df.empty
-    except:
-        return False
+        info = yf.Ticker(query).info
+        if info and "regularMarketPrice" in info:
+            naam = info.get("shortName") or info.get("longName") or query
+            return [(query, naam)]
+    except Exception:
+        pass  # yfinance gaf geen geldige data terug
+
+    # Als fallback → FMP doorzoeken
+    try:
+        url = f"https://financialmodelingprep.com/api/v3/search?query={query}&limit=50&apikey={fmp_api_key}"
+        response = requests.get(url)
+        data = response.json()
+        resultaten = [(item["symbol"], item.get("name", item["symbol"])) for item in data]
+        return resultaten
+    except Exception as e:
+        st.error(f"Fout bij ophalen FMP-tickers: {e}")
+        return []
+        
 
 # 🔁 Slimme intervalkeuze obv periode
 def bepaal_interval(periode):
