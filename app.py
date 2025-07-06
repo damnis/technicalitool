@@ -76,15 +76,15 @@ if query:
         ## 📋 Koersdata (kleur per kolom)
         st.markdown("### 📋 Koersdata (kleur per kolom)")
         if st.toggle("Toon laatste 100 regels"):
-            df_tail = df.tail(100)
+            df_tail = df.tail(100).copy()
         else:
-            df_tail = df.tail(20)
+            df_tail = df.tail(20).copy()
 
-        # 🔢 Afronden op 3 decimalen
-        for kolom in ["Open", "High", "Low", "Close"]:
-            if kolom in df_tail.columns:
-                df_tail[kolom] = df_tail[kolom].round(3)
+        # 🔢 Afronden alle numerieke kolommen op 3 decimalen
+        for col in df_tail.select_dtypes(include=["float", "int"]).columns:
+            df_tail[col] = df_tail[col].round(3)
 
+        # 🎨 Kleur per koerskolom (alleen Open, High, Low, Close)
         def kleur_koers_kolom(series):
             kleuren = []
             for i in range(len(series)):
@@ -99,13 +99,14 @@ if query:
                     kleuren.append('color: gray')
             return kleuren
 
+        # 🖌️ Stijl toepassen
         styled_df = df_tail.style
         for kolom in ["Open", "High", "Low", "Close"]:
             if kolom in df_tail.columns:
                 styled_df = styled_df.apply(kleur_koers_kolom, subset=[kolom])
 
+        # 🖥️ Tabel tonen
         st.dataframe(styled_df, use_container_width=True)
-
 
 
 
