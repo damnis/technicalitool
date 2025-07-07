@@ -65,19 +65,30 @@ def fetch_data(ticker, periode):
     df.index = pd.to_datetime(df.index, errors="coerce")
     df = df[~df.index.isna()]
 
-  
+#  start_date = df.index.to_list()[0].date()
+#        end_date = df.index.to_list()[-1].date()
     # 🔍 Bepaal type
     if ticker.upper().endswith("-USD"):
         st.write("🪙 Crypto ticker gedetecteerd")
     else:
         st.write("📈 Stock ticker gedetecteerd")
         try:
+            # Bepaal de juiste beurskalender (Euronext voor Europese aandelen en NYSE voor de rest)
             cal = mcal.get_calendar("Euronext") if ticker.upper().endswith(".AS") else mcal.get_calendar("NYSE")
-            schedule = cal.schedule(start_date=df.index.min(), end_date=df.index.max())
-            valid_days = schedule.index
+    
+            # Verkrijg de start- en einddatum uit de dataframe
+            start_date = df.index[0].date()
+            end_date = df.index[-1].date()
+    
+            # Haal de beurskalender op voor de gewenste periode
+            schedule = cal.schedule.loc[start_date:end_date]
+    
+            # Verkrijg de geldige handelsdagen
+            valid_days = set(schedule.index.date)
+    
+            # Filter de dataframe op de geldige handelsdagen
             df = df[df.index.normalize().isin(valid_days)]
-#            valid_days = set(schedule.index.date)
-#            df = df[pd.Series(df.index.date, index=df.index).isin(valid_days)]
+    
             st.write("✅ Na beursdagenfilter:", len(df))
         except Exception as e:
             st.error(f"❌ Kalenderfout: {e}")
