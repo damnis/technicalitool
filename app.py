@@ -36,7 +36,7 @@ tot = st.date_input("Einddatum", datetime.today())
 # 📏 Overlay indicatoren
 st.markdown("### Overlay Indicatoren")
 overlay_lijnen = st.multiselect(
-    "Selecteer lijnen op grafiek", ["MA35", "MA50", "MA150", "Bollinger Bands"], default=["MA20"]
+    "Selecteer lijnen op grafiek", ["MA35", "MA50", "MA150", "Bollinger Bands"], default=["MA150", "MA35","Bollinger Bands"]
 )
 
 # 📉 Onderliggende grafieken
