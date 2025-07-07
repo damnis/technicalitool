@@ -13,7 +13,7 @@ st.title("📈 Technicalitool - Technische Analyse voor Aandelen")
 # 🔍 Ticker input
 zoekterm = st.text_input("🔍 Zoek op naam of ticker", value="AAPL").strip()
 
-suggesties = search_ticker(zoekterm)
+suggesties = search_ticker_fmp(zoekterm)
 
 if suggesties:
     ticker_opties = [f"{sym} - {naam}" for sym, naam in suggesties]
@@ -45,7 +45,7 @@ onder_grafiek = st.multiselect("Kies extra grafieken", ["Volume", "MACD", "RSI"]
 
 # ✅ Data ophalen en tonen
 if query:
-    df = fetch_data(query, periode_keuze)
+    df = fetch_data_fmp(query, periode_keuze)
 
     if not df.empty:
         st.success(f"✅ Gegevens opgehaald: {len(df)} datapunten")
