@@ -72,13 +72,13 @@ def fetch_data(ticker, periode):
         st.write("📈 Stock ticker gedetecteerd")
         try:
             cal = mcal.get_calendar("Euronext") if ticker.upper().endswith(".AS") else mcal.get_calendar("NYSE")
-            schedule = cal.schedule.loc[df.index.min():df.index.max()]
+            schedule = cal.schedule(start_date=df.index.min(), end_date=df.index.max())
             valid_days = schedule.index.normalize()
             df = df[df.index.normalize().isin(valid_days)]
             st.write("✅ Na beursdagenfilter:", len(df))
         except Exception as e:
             st.error(f"❌ Kalenderfout: {e}")
-
+        
     # Indicatoren
     df["MA35"] = df["Close"].rolling(window=35, min_periods=1).mean()
     df["MA50"] = df["Close"].rolling(window=50, min_periods=1).mean()
