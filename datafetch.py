@@ -4,6 +4,16 @@ import plotly.graph_objects as go
 import streamlit as st
 import requests
 import pandas_market_calendars as mcal
+try:
+    nyse = mcal.get_calendar('NYSE')
+    st.write("✅ NYSE kalender geladen")
+except Exception as e:
+    st.error(f"❌ NYSE kalenderfout: {e}")
+
+if ticker.upper().endswith("-USD"):
+    st.write("🪙 Crypto ticker gedetecteerd")
+else:
+    st.write("📈 Stock ticker gedetecteerd")
 
 @st.cache_data(ttl=3600)
 def search_ticker(query, fmp_api_key="D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"):
@@ -93,6 +103,7 @@ def fetch_data(ticker, periode):
     df["BB_std"] = df["Close"].rolling(window=20, min_periods=1).std()
     df["BB_upper"] = df["BB_middle"] + 2 * df["BB_std"]
     df["BB_lower"] = df["BB_middle"] - 2 * df["BB_std"]
+    st.write("🔍 Aantal rijen na ophalen en filter:", len(df))
 
     return df
 
