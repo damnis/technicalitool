@@ -4,7 +4,7 @@ import yfinance as yf
 import requests
 import plotly.graph_objs as go
 from datetime import datetime, timedelta
-from datafetch import fetch_data, draw_custom_candlestick_chart, search_ticker
+from datafetch import fetch_data_fmp, draw_custom_candlestick_chart, search_ticker_fmp
 
 
 st.set_page_config(page_title="📈 Technicalitool", layout="wide")
