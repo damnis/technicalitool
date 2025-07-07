@@ -4,12 +4,6 @@ import plotly.graph_objects as go
 import streamlit as st
 import requests
 import pandas_market_calendars as mcal
-try:
-    nyse = mcal.get_calendar('NYSE')
-    st.write("✅ NYSE kalender geladen")
-except Exception as e:
-    st.error(f"❌ NYSE kalenderfout: {e}")
-
 
 @st.cache_data(ttl=3600)
 def search_ticker(query, fmp_api_key="D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"):
@@ -35,11 +29,6 @@ def search_ticker(query, fmp_api_key="D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"):
         st.error(f"Fout bij ophalen FMP-tickers: {e}")
         return []
 
-if ticker.upper().endswith("-USD"):
-    st.write("🪙 Crypto ticker gedetecteerd")
-else:
-    st.write("📈 Stock ticker gedetecteerd")
-
 # 🔁 Slimme intervalkeuze obv periode
 def bepaal_interval(periode):
     if periode in ["1d", "5d"]:
@@ -56,44 +45,39 @@ def bepaal_interval(periode):
 # ✅ Caching van volledige dataset (candlestick + overlays)
 @st.cache_data(ttl=900)
 def fetch_data(ticker, periode):
+    st.write(f"📡 Ophalen data voor: {ticker} ({periode})")
     interval = bepaal_interval(periode)
     df = yf.download(ticker, period=periode, interval=interval)
+
+    st.write("📊 Rijen vóór filtering:", len(df))
 
     if df.empty:
         return pd.DataFrame()
 
+    # 🛡️ Fix voor MultiIndex zoals ('Close', 'AAPL')
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
 
-    # Haal valuta op voor beurstype
-    try:
-        info = yf.Ticker(ticker).info
-        currency = info.get("currency", "")
-    except:
-        currency = ""
-
-    if ticker.endswith("-USD"):
-        asset_type = "crypto"
-    elif currency == "EUR":
-        asset_type = "stock_eu"
-    else:
-        asset_type = "stock_us"
-
-    # Filter non-business days bij stocks
-    if asset_type != "crypto":
-        if asset_type == "stock_eu":
-            cal = mcal.get_calendar("XAMS")
-        else:
-            cal = mcal.get_calendar("NYSE")
-
-        open_days = cal.valid_days(
-            start_date=df.index.min().strftime('%Y-%m-%d'),
-            end_date=df.index.max().strftime('%Y-%m-%d')
-        )
-        df = df[df.index.isin(pd.to_datetime(open_days))]
+    if "Close" not in df.columns:
+        st.warning(f"⚠️ 'Close'-kolom niet gevonden. Kolommen: {df.columns.tolist()}")
+        return pd.DataFrame()
 
     df.index = pd.to_datetime(df.index, errors="coerce")
     df = df[~df.index.isna()]
+
+    # 🔍 Bepaal type
+    if ticker.upper().endswith("-USD"):
+        st.write("🪙 Crypto ticker gedetecteerd")
+    else:
+        st.write("📈 Stock ticker gedetecteerd")
+        try:
+            cal = mcal.get_calendar("Euronext") if ticker.upper().endswith(".AS") else mcal.get_calendar("NYSE")
+            schedule = cal.schedule.loc[df.index.min():df.index.max()]
+            valid_days = schedule.index.normalize()
+            df = df[df.index.normalize().isin(valid_days)]
+            st.write("✅ Na beursdagenfilter:", len(df))
+        except Exception as e:
+            st.error(f"❌ Kalenderfout: {e}")
 
     # Indicatoren
     df["MA35"] = df["Close"].rolling(window=35, min_periods=1).mean()
@@ -104,8 +88,8 @@ def fetch_data(ticker, periode):
     df["BB_std"] = df["Close"].rolling(window=20, min_periods=1).std()
     df["BB_upper"] = df["BB_middle"] + 2 * df["BB_std"]
     df["BB_lower"] = df["BB_middle"] - 2 * df["BB_std"]
-    st.write("🔍 Aantal rijen na ophalen en filter:", len(df))
 
+    st.write("📉 Laatste datum in gefilterde data:", df.index[-1])
     return df
 
 # ✅ Custom candlestick-plotter
@@ -135,11 +119,11 @@ def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]):
 
     # Overlay lijnen
     if not df.empty:
-        if "MA35" in selected_lines or "MA35" in selected_lines:
+        if "MA35" in selected_lines:
             fig.add_trace(go.Scatter(x=df.index, y=df["MA35"], mode="lines", name="MA 35"))
         if "MA50" in selected_lines:
             fig.add_trace(go.Scatter(x=df.index, y=df["MA50"], mode="lines", name="MA 50"))
-        if "MA150" in selected_lines or "MA150" in selected_lines:
+        if "MA150" in selected_lines:
             fig.add_trace(go.Scatter(x=df.index, y=df["MA150"], mode="lines", name="MA 150"))
         if "Bollinger Bands" in selected_lines:
             fig.add_trace(go.Scatter(x=df.index, y=df["BB_upper"], mode="lines", name="BB Upper", line=dict(dash="dot")))
@@ -152,10 +136,12 @@ def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]):
         xaxis_rangeslider_visible=False,
         template="plotly_white",
         height=600,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0)  # legenda bovenaan
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5)
     )
 
     return fig
+
+
 
 
 
