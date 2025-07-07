@@ -10,10 +10,6 @@ try:
 except Exception as e:
     st.error(f"❌ NYSE kalenderfout: {e}")
 
-if ticker.upper().endswith("-USD"):
-    st.write("🪙 Crypto ticker gedetecteerd")
-else:
-    st.write("📈 Stock ticker gedetecteerd")
 
 @st.cache_data(ttl=3600)
 def search_ticker(query, fmp_api_key="D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"):
@@ -38,6 +34,11 @@ def search_ticker(query, fmp_api_key="D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"):
     except Exception as e:
         st.error(f"Fout bij ophalen FMP-tickers: {e}")
         return []
+
+if ticker.upper().endswith("-USD"):
+    st.write("🪙 Crypto ticker gedetecteerd")
+else:
+    st.write("📈 Stock ticker gedetecteerd")
 
 # 🔁 Slimme intervalkeuze obv periode
 def bepaal_interval(periode):
