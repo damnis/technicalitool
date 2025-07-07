@@ -1,64 +1,61 @@
 import pandas as pd 
-import plotly.graph_objects as go 
+import requests 
 import streamlit as st 
-import requests
+import plotly.graph_objects as go 
+import pandas_market_calendars as mcal
 
 FMP_API_KEY = "D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"
 
-@st.cache_data(ttl=3600) def search_ticker(query): query = query.strip() try: url = f"https://financialmodelingprep.com/api/v3/search?query={query}&limit=100&apikey={FMP_API_KEY}" response = requests.get(url) data = response.json()
+✅ Tickerzoekfunctie met voorkeur voor NYSE/NASDAQ
 
-# Prioriteit aan tickers uit VS (NYSE/NASDAQ) met exacte of bijna-exacte match
-    def sort_key(item):
-        score = 0
-        if item["symbol"].upper() == query.upper():
-            score -= 10
-        if query.lower() in item["name"].lower():
-            score -= 5
-        if item.get("exchangeShortName", "") in ["NASDAQ", "NYSE"]:
-            score -= 2
-        return score
+def search_ticker_fmp(query): query = query.upper().strip() url = f"https://financialmodelingprep.com/api/v3/search?query={query}&limit=50&apikey={FMP_API_KEY}" try: response = requests.get(url) data = response.json() if not data: return [] # Sorteer op beursvoorkeur (NYSE/NASDAQ eerst) def beurs_score(exchange): if exchange == "NASDAQ": return 0 if exchange == "NYSE": return 1 return 2 data.sort(key=lambda x: beurs_score(x.get("exchangeShortName", ""))) return [(item["symbol"], item.get("name", item["symbol"])) for item in data] except Exception as e: st.error(f"❌ Fout bij zoeken naar tickers: {e}") return []
 
-    sorted_results = sorted(data, key=sort_key)
-    resultaten = [(item["symbol"], item.get("name", item["symbol"])) for item in sorted_results]
-    return resultaten
-except Exception as e:
-    st.error(f"Fout bij ophalen FMP-tickers: {e}")
-    return []
+✅ Ophalen historische koersdata
 
-@st.cache_data(ttl=900) def fetch_data(ticker, periode): st.write(f"📡 Ophalen data voor: {ticker} ({periode})") resolution = bepaal_interval(periode)
+def fetch_data_fmp(ticker, periode="1y"): st.write(f"📡 Ophalen FMP-data voor: {ticker} ({periode})") url = f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?serietype=line&timeseries=1000&apikey={FMP_API_KEY}" try: response = requests.get(url) data = response.json() if "historical" not in data: st.warning("⚠️ Geen historische data gevonden") return pd.DataFrame()
 
-url = f"https://financialmodelingprep.com/api/v3/historical-chart/{resolution}/{ticker}?apikey={FMP_API_KEY}"
-try:
-    response = requests.get(url)
-    data = response.json()
-    df = pd.DataFrame(data)
-    if df.empty or 'date' not in df.columns:
-        return pd.DataFrame()
-
+df = pd.DataFrame(data["historical"])
     df["date"] = pd.to_datetime(df["date"])
     df.set_index("date", inplace=True)
     df.sort_index(inplace=True)
 
-    df = df.rename(columns={"open": "Open", "high": "High", "low": "Low", "close": "Close", "volume": "Volume"})
+    st.write("📊 Rijen vóór filtering:", len(df))
 
+    # 📅 Weekdagenfilter (ma-vr)
+    df = df[df.index.dayofweek < 5]  # 0=maandag, 6=zondag
+
+    # 🎌 Holidayfilter obv NYSE kalender (standaard)
+    try:
+        cal = mcal.get_calendar("NYSE")
+        schedule = cal.schedule(start_date=df.index.min(), end_date=df.index.max())
+        valid_days = set(schedule.index.date)
+        df = df[pd.Series(df.index.date, index=df.index).isin(valid_days)]
+        st.write("✅ Na filtering:", len(df))
+    except Exception as e:
+        st.error(f"❌ Kalenderfout: {e}")
+
+    # ➕ Voeg extra kolommen toe voor compatibiliteit
+    df = df.rename(columns={"close": "Close"})
+    df["Open"] = df["Close"]
+    df["High"] = df["Close"]
+    df["Low"] = df["Close"]
+
+    # 📉 Indicatoren
     df["MA35"] = df["Close"].rolling(window=35, min_periods=1).mean()
     df["MA50"] = df["Close"].rolling(window=50, min_periods=1).mean()
     df["MA150"] = df["Close"].rolling(window=150, min_periods=1).mean()
-
     df["BB_middle"] = df["Close"].rolling(window=20, min_periods=1).mean()
     df["BB_std"] = df["Close"].rolling(window=20, min_periods=1).std()
     df["BB_upper"] = df["BB_middle"] + 2 * df["BB_std"]
     df["BB_lower"] = df["BB_middle"] - 2 * df["BB_std"]
 
-    st.write(f"✅ Gegevens opgehaald: {len(df)} datapunten")
+    st.write("📉 Laatste datum:", df.index[-1])
     return df
 except Exception as e:
-    st.error(f"Fout bij ophalen koersdata: {e}")
+    st.error(f"❌ Fout bij ophalen FMP-data: {e}")
     return pd.DataFrame()
 
-def bepaal_interval(periode): if periode in ["1d", "5d"]: return "5min" elif periode in ["1mo", "3mo"]: return "30min" elif periode in ["6mo", "1y", "ytd"]: return "1hour" elif periode in ["3y", "5y"]: return "4hour" else: return "1day"
-
-✅ Custom candlestick-plotter
+✅ Candlestick-grafiek
 
 def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]): fig = go.Figure()
 
@@ -106,3 +103,11 @@ fig.update_layout(
 
 return fig
 
+
+
+
+
+
+
+
+# w
