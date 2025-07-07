@@ -65,6 +65,7 @@ def fetch_data(ticker, periode):
     df.index = pd.to_datetime(df.index, errors="coerce")
     df = df[~df.index.isna()]
 
+  
     # 🔍 Bepaal type
     if ticker.upper().endswith("-USD"):
         st.write("🪙 Crypto ticker gedetecteerd")
@@ -72,8 +73,8 @@ def fetch_data(ticker, periode):
         st.write("📈 Stock ticker gedetecteerd")
         try:
             cal = mcal.get_calendar("Euronext") if ticker.upper().endswith(".AS") else mcal.get_calendar("NYSE")
-            schedule = cal.schedule().loc[df.index.min():df.index.max()]
-            valid_days = schedule.index.tz_localize(None).normalize()
+            schedule = cal.schedule(start_date=df.index.min(), end_date=df.index.max())
+            valid_days = schedule.index.normalize()
             df = df[df.index.normalize().isin(valid_days)]
             st.write("✅ Na beursdagenfilter:", len(df))
         except Exception as e:
