@@ -6,11 +6,11 @@ import pandas_market_calendars as mcal
 
 FMP_API_KEY = "D2MyI4eYNXDNJzpYT4N6nTQ2amVbJaG5"
 
-✅ Tickerzoekfunctie met voorkeur voor NYSE/NASDAQ
+# ✅ Tickerzoekfunctie met voorkeur voor NYSE/NASDAQ
 
 def search_ticker_fmp(query): query = query.upper().strip() url = f"https://financialmodelingprep.com/api/v3/search?query={query}&limit=50&apikey={FMP_API_KEY}" try: response = requests.get(url) data = response.json() if not data: return [] # Sorteer op beursvoorkeur (NYSE/NASDAQ eerst) def beurs_score(exchange): if exchange == "NASDAQ": return 0 if exchange == "NYSE": return 1 return 2 data.sort(key=lambda x: beurs_score(x.get("exchangeShortName", ""))) return [(item["symbol"], item.get("name", item["symbol"])) for item in data] except Exception as e: st.error(f"❌ Fout bij zoeken naar tickers: {e}") return []
 
-✅ Ophalen historische koersdata
+# ✅ Ophalen historische koersdata
 
 def fetch_data_fmp(ticker, periode="1y"): st.write(f"📡 Ophalen FMP-data voor: {ticker} ({periode})") url = f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker}?serietype=line&timeseries=1000&apikey={FMP_API_KEY}" try: response = requests.get(url) data = response.json() if "historical" not in data: st.warning("⚠️ Geen historische data gevonden") return pd.DataFrame()
 
@@ -55,7 +55,7 @@ except Exception as e:
     st.error(f"❌ Fout bij ophalen FMP-data: {e}")
     return pd.DataFrame()
 
-✅ Candlestick-grafiek
+# ✅ Candlestick-grafiek
 
 def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]): fig = go.Figure()
 
@@ -102,6 +102,21 @@ fig.update_layout(
 )
 
 return fig
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
