@@ -59,8 +59,8 @@ def fetch_data_fmp(ticker, periode="1y"):
                 st.write("✅ Na filtering:", len(df))
             except Exception as e:
                 st.error(f"❌ Kalenderfout: {e}")
-            else:
-                st.write("🪙 Crypto: geen beursdagenfilter toegepast")
+        else:
+            st.write("🪙 Crypto: geen beursdagenfilter toegepast")
     
         
         # ➕ Voeg extra kolommen toe voor compatibiliteit
