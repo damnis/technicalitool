@@ -123,11 +123,11 @@ def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]):
 
     # Overlay lijnen
     if not df.empty:
-        if "MA20" in selected_lines or "MA35" in selected_lines:
+        if "MA35" in selected_lines or "MA35" in selected_lines:
             fig.add_trace(go.Scatter(x=df.index, y=df["MA35"], mode="lines", name="MA 35"))
         if "MA50" in selected_lines:
             fig.add_trace(go.Scatter(x=df.index, y=df["MA50"], mode="lines", name="MA 50"))
-        if "MA200" in selected_lines or "MA150" in selected_lines:
+        if "MA150" in selected_lines or "MA150" in selected_lines:
             fig.add_trace(go.Scatter(x=df.index, y=df["MA150"], mode="lines", name="MA 150"))
         if "Bollinger Bands" in selected_lines:
             fig.add_trace(go.Scatter(x=df.index, y=df["BB_upper"], mode="lines", name="BB Upper", line=dict(dash="dot")))
