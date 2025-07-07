@@ -1,3 +1,4 @@
+
 import pandas as pd
 import requests
 import streamlit as st
@@ -45,19 +46,25 @@ def fetch_data_fmp(ticker, periode="1y"):
         st.write("📊 Rijen vóór filtering:", len(df))
 
         # 📅 Weekdagenfilter (ma-vr)
-        df = df[df.index.dayofweek < 5]  # 0=maandag, 6=zondag
+        df = df[df.index.dayofweek < 5]
 
-        # 🎌 Holidayfilter obv NYSE kalender (standaard)
-        try:
-            cal = mcal.get_calendar("NYSE")
-            schedule = cal.schedule(start_date=df.index.min(), end_date=df.index.max())
-            valid_days = set(schedule.index.date)
-            df = df[pd.Series(df.index.date, index=df.index).isin(valid_days)]
-            st.write("✅ Na filtering:", len(df))
-        except Exception as e:
-            st.error(f"❌ Kalenderfout: {e}")
+        # 📆 Beursdagenfilter
+        if not ticker.upper().endswith("-USD"):
+            try:
+                is_europe = any(exchange in ticker.upper() for exchange in [".AS", ".BR", ".PA", ".DE"])
+                cal = mcal.get_calendar("XAMS") if is_europe else mcal.get_calendar("NYSE")
+                start_date = df.index.min().date()
+                end_date = df.index.max().date()
+                schedule = cal.schedule(start_date=start_date, end_date=end_date)
+                valid_days = set(schedule.index.normalize())
+                df = df[df.index.normalize().isin(valid_days)]
+                st.write("✅ Na filtering:", len(df))
+            except Exception as e:
+                st.error(f"❌ Kalenderfout: {e}")
+        else:
+            st.write("🪙 Crypto: geen beursdagenfilter toegepast")
 
-        # ➕ Voeg extra kolommen toe voor compatibiliteit
+        # ➕ Extra kolommen
         df = df.rename(columns={"close": "Close"})
         df["Open"] = df["Close"]
         df["High"] = df["Close"]
@@ -79,7 +86,6 @@ def fetch_data_fmp(ticker, periode="1y"):
         return pd.DataFrame()
 
 # ✅ Candlestick-grafiek
-
 def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]):
     fig = go.Figure()
 
@@ -126,22 +132,3 @@ def draw_custom_candlestick_chart(df, ticker="", selected_lines=[]):
     )
 
     return fig
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# w
