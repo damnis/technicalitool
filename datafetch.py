@@ -47,16 +47,22 @@ def fetch_data_fmp(ticker, periode="1y"):
         # 📅 Weekdagenfilter (ma-vr)
         df = df[df.index.dayofweek < 5]  # 0=maandag, 6=zondag
 
-        # 🎌 Holidayfilter obv NYSE kalender (standaard)
-        try:
-            cal = mcal.get_calendar("NYSE")
-            schedule = cal.schedule(start_date=df.index.min(), end_date=df.index.max())
-            valid_days = set(schedule.index.date)
-            df = df[pd.Series(df.index.date, index=df.index).isin(valid_days)]
-            st.write("✅ Na filtering:", len(df))
-        except Exception as e:
-            st.error(f"❌ Kalenderfout: {e}")
-
+        # 📆 Beursdagenfilter
+        if not ticker.upper().endswith("-USD"):  # Geen crypto
+            try:
+                cal = mcal.get_calendar("Euronext") if ticker.upper().endswith(".AS") else mcal.get_calendar("NYSE")
+                start_date = df.index.min().date()
+                end_date = df.index.max().date()
+                schedule = cal.schedule(start_date=start_date, end_date=end_date)
+                valid_days = set(schedule.index.normalize())
+                df = df[df.index.normalize().isin(valid_days)]
+                st.write("✅ Na filtering:", len(df))
+            except Exception as e:
+                st.error(f"❌ Kalenderfout: {e}")
+            else:
+                st.write("🪙 Crypto: geen beursdagenfilter toegepast")
+    
+        
         # ➕ Voeg extra kolommen toe voor compatibiliteit
         df = df.rename(columns={"close": "Close"})
         df["Open"] = df["Close"]
