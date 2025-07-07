@@ -67,6 +67,7 @@ def fetch_data(ticker, periode):
 
 #  start_date = df.index.to_list()[0].date()
 #        end_date = df.index.to_list()[-1].date()
+    
     # 🔍 Bepaal type
     if ticker.upper().endswith("-USD"):
         st.write("🪙 Crypto ticker gedetecteerd")
@@ -81,7 +82,9 @@ def fetch_data(ticker, periode):
             end_date = df.index[-1].date()
     
             # Haal de beurskalender op voor de gewenste periode
-            schedule = cal.schedule.loc[start_date:end_date]
+     #       schedule = cal.schedule.loc[start_date:end_date]
+            schedule = cal.schedule(start_date=df.index.min(), end_date=df.index.max())
+
     
             # Verkrijg de geldige handelsdagen
             valid_days = set(schedule.index.date)
